@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T◯DAに聞いてみよう v4</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a110b 0%, #0d0d0d 100%);
+            text-align: center;
+            padding: 50px 20px;
+            color: #e0dcd3;
+            min-height: 100vh;
+            box-sizing: border-box;
+            margin: 0;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #261c14;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            border: 1px solid #3d2f25;
+        }
+        h1 {
+            color: #f5f0e6;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .portrait-container {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+        }
+        .portrait {
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid #4a3b32;
+            background-color: #1a110b;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 16px;
+            background-color: #1a110b;
+            color: #fff;
+            border: 1px solid #4a3b32;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            outline: none;
+        }
+        input[type="text"]::placeholder {
+            color: #706055;
+        }
+        input[type="text"]:focus {
+            border-color: #8c6d58;
+        }
+        button {
+            background-color: #4a3b32;
+            color: #f5f0e6;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #614e42;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .response-box {
+            margin-top: 25px;
+            padding: 18px;
+            background-color: #1d140e;
+            border-left: 5px solid #8c6d58;
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: #f5f0e6;
+            border-radius: 0 5px 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1># T◯DAに聞いてみよう</h1>
+    <p style="color: #a8998e;">何を聞いても、T◯DAの答えは決まっている。</p>
+    
+    <div class="portrait-container">
+        <img id="portrait" class="portrait" src="default.jpg" alt="T◯DAの肖像">
+    </div>
+    
+    <p>……何か聞きたいことはありますか？</p>
+    
+    <input type="text" id="questionInput" placeholder="質問を入力してください..." onkeydown="handleKeyDown(event)">
+    <br>
+    <button onclick="askToda()">T◯DAに質問する</button>
+    
+    <div class="response-box" id="answer">
+        （ここに答えが表示されます）
+    </div>
+</div>
+
+<audio id="bgm" src="Star.mp3" preload="auto"></audio>
+
+<script>
+    const defaultImage = "default.jpg";
+    const kingImage = "king.jpg";
+    const daijoubuImage = "daijoubu.jpg";
+    const rexImage = "green.jpg";
+
+    const triggers = ["きんくる", "キンクル", "キングクルール"];
+
+    const answers = [
+        "なんのはなしでしたっけ",
+        "そんなわけないじゃないですか",
+        "コーパスやらせますよ？",
+        "How many times do I have to say!",
+        "何の話なわけないじゃないですか",
+        "やきいもとかw(冷笑)"
+    ];
+
+    let wasSpecialCommand = false;
+
+    function handleKeyDown(event) {
+        if (event.key === "Enter") {
+            askToda();
+        }
+    }
+
+    function askToda() {
+        const input = document.getElementById('questionInput');
+        const portrait = document.getElementById('portrait');
+        const answer = document.getElementById('answer');
+        const bgm = document.getElementById('bgm');
+        
+        const q = input.value.trim();
+        
+        if (q === "") {
+            answer.textContent = "質問が入力されていないようです。";
+            return;
+        }
+
+        bgm.pause();
+        bgm.currentTime = 0;
+
+        const isKinkuru = triggers.includes(q);
+        const isDaijoubu = (q === "大丈夫？" || q === "大丈夫?" || q === "大丈夫");
+        
+        // 1%の確率、または「greengreen,which」が直接入力された場合にRexModeを発動
+        const isRexMode = (!isKinkuru && !isDaijoubu && (q === "greengreen,which" || Math.random() < 0.05));
+
+        if (isKinkuru) {
+            portrait.src = kingImage;
+        } else if (isDaijoubu) {
+            portrait.src = daijoubuImage;
+        } else if (isRexMode) {
+            portrait.src = rexImage;
+            bgm.play().catch(err => {
+                console.log("自動再生がブロックされました:", err);
+            });
+        } else {
+            portrait.src = defaultImage;
+        }
+        
+        let reply = "";
+
+        if (isDaijoubu) {
+            reply = "大丈夫？";
+            wasSpecialCommand = true;
+        } else if (isKinkuru) {
+            const kinkuruReplies = ["そんなわけないじゃないですか", "なんのはなしでしたっけ", "みきこ呼ぶぞ(怒)"];
+            reply = kinkuruReplies[Math.floor(Math.random() * kinkuruReplies.length)];
+            wasSpecialCommand = true;
+        } else if (isRexMode) {
+            reply = "うるせぇ黙れ";
+            wasSpecialCommand = false;
+        } else {
+            if (wasSpecialCommand) {
+                reply = (Math.random() < 0.9) ? "私から目をそらさないでください" : "I can't love you enough♡";
+            } else {
+                reply = answers[Math.floor(Math.random() * answers.length)];
+            }
+            wasSpecialCommand = false;
+        }
+
+        answer.textContent = reply;
+        input.value = "";
+    }
+</script>
+
+</body>
+</html>
